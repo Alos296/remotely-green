@@ -1,8 +1,6 @@
 import ong_calculator as model
 from datetime import date, timedelta
 
-test = 5
-
 def prepare_parser():
     import argparse
     parser = argparse.ArgumentParser()

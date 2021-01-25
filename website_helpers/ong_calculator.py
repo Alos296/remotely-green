@@ -47,7 +47,7 @@ class ClientProperties():
     @staticmethod
     def ledlcd(area):
         return Device(20 + area * 172,
-                      3218 * area, 
+                      3218 * area,
                       536 * area)
 
     projector = Device(135, 384, 64)

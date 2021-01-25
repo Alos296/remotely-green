@@ -1,4 +1,4 @@
-import ong_calculator as model
+from website_helpers import ong_calculator as model
 from datetime import date, timedelta
 
 def prepare_parser():
@@ -52,7 +52,11 @@ def client_power(devices, attr="total_power"):
 
 def date_delta(input_date):
     today = date.today()
-    date_of_purchase = date(*map(int, input_date.split('/')[::-1]))
+    if len(input_date) == 10 :
+        tmp = "{}{}/{}{}/{}{}{}{}".format(input_date[8],input_date[9],input_date[5],input_date[6],input_date[0],input_date[1],input_date[2],input_date[3])
+    else :
+        tmp = "10/10/2018"
+    date_of_purchase = date(*map(int, tmp.split('/')[::-1]))
     cnt = 0
     while today > date_of_purchase:
         date_of_purchase += timedelta(365)
@@ -74,7 +78,7 @@ def lenght_to_screen_area(format, size) :
 
 def upper_bound_model():
     props = model.ClientProperties
-    years_used = date_delta("28/8/2019")
+    years_used = date_delta("2017/06/09")
     lifetime_hours = 5 * 260 * years_used
     screen_area = lenght_to_screen_area(16/9, 25)
     devices = [props.camera, props.plasma(screen_area), props.microphone] * 3
@@ -82,14 +86,15 @@ def upper_bound_model():
     devices = [Device(d, lifetime_hours) for d in devices]
     devices += [Device(props.router, 2 * lifetime_hours)]
 
-    bandwidth = 7 # Mb/s
+    bandwidth = 10 # Mb/s
     bandwidth *= 3600. / 1024 / 8 # Gb/h
+    print_model(devices, bandwidth)
     return devices, bandwidth
 
 
 def middle2_bound_model():
     props = model.ClientProperties
-    years_used = date_delta("28/8/2018")
+    years_used = date_delta("2017/06/09")
     lifetime_hours = 5 * 260 * years_used
     screen_area = lenght_to_screen_area(16/9, 25)
     devices = [props.camera, props.microphone]
@@ -98,34 +103,36 @@ def middle2_bound_model():
     devices = [Device(d, lifetime_hours) for d in devices]
     devices += [Device(props.router, lifetime_hours)]
 
-    bandwidth = 7 # Mb/s
+    bandwidth = 5 # Mb/s
     bandwidth *= 3600. / 1024 / 8 # Gb/h
+    print_model(devices, bandwidth)
     return devices, bandwidth
 
 
 def middle1_bound_model():
     props = model.ClientProperties
-    years_used = date_delta("28/8/2016")
+    years_used = date_delta("2017/06/09")
     lifetime_hours = 5 * 260 * years_used
-    screen_area = lenght_to_screen_area(16/9, 25)
-    devices = [props.camera, props.ledlcd(screen_area), props.microphone]
-    devices += [props.personal_comp]
+    screen_area = lenght_to_screen_area(16/9, 20)
+    devices = [props.ledlcd(screen_area),props.microphone,props.personal_comp,props.router]
     devices = [Device(d, lifetime_hours) for d in devices]
-    devices += [Device(props.router, lifetime_hours)]
 
-    bandwidth = 7 # Mb/s
+    bandwidth = 1.5 # Mb/s
     bandwidth *= 3600. / 1024 / 8 # Gb/h
+
+    print_model(devices, bandwidth)
     return devices, bandwidth
 
 
 def lower_bound_model():
     props = model.ClientProperties
-    years_used = date_delta("28/8/2013")
+    years_used = date_delta("2017/06/09")
     lifetime_hours = 10 * 260 * years_used
     devices = [props.laptop, props.router]
     devices = [Device(d, lifetime_hours) for d in devices]
     bandwidth = 0.128 # Mb/s
     bandwidth *= 3600. / 1024 / 8 # Gb/h
+    print_model(devices, bandwidth)
     return devices, bandwidth
 
 
@@ -137,17 +144,16 @@ def create_model(list_devices):                                                 
     cnt_of_devices = 0
 
     for element in list_devices :
-        years_used = date_delta(element.purchase_date)
-
+        years_used = date_delta(str(element.purchase_date))
         lifetime_hours = 10 * 260 * years_used
 
         if element.type == "laptop" :
             devices += [props.laptop]
-        if element.type == "personal computer" :
+        if element.type == "persComputer" :
             devices += [props.personal_comp]
-        if element.type == "high CODEC" :
+        if element.type == "highCODEC" :
             devices += [props.high_codec]
-        if element.type == "low CODEC" :
+        if element.type == "lowCODEC" :
             devices += [props.low_codec]
         if element.type == "projector" :
             devices += [props.projector]
@@ -157,20 +163,19 @@ def create_model(list_devices):                                                 
             devices += [props.camera]
         if element.type == "speaker" :
             devices += [props.speaker]
-        if element.type == "microphone" :
+        if element.type == "micro" :
             devices += [props.microphone]
         if element.type == "screen" :
+            screen_area = lenght_to_screen_area(int(element.inches), int(element.long)/int(element.large))
             if element.model == "plasma" :
-                screen_area = lenght_to_screen_area(element.inches, element.long/element.large)
                 devices += [props.plasma(screen_area)]
             else :
-                screen_area = lenght_to_screen_area(element.inches, element.long/element.large)
                 devices += [props.ledlcd(screen_area)]
 
         devices = [Device(devices[cnt_of_devices], lifetime_hours)]
         cnt_of_devices += 1
 
-    bandwidth = 0.128 # Mb/s
+    bandwidth = 0.5 # Mb/s
     bandwidth *= 3600. / 1024 / 8 # Gb/h
     return devices, bandwidth
 
@@ -180,11 +185,11 @@ def print_model(devices, bandwidth):
     server_em = server_embodied_power(bandwidth)
     client_op = client_power(devices, "power")
     client_em = client_power(devices, "embodied_power")
-    print("Embodied", client_em, server_em, [s + client_em for s in server_em])
-    print("Operation", client_op, server_op, [s + client_op for s in server_op])
+    #print("Embodied", client_em, server_em, [s + client_em for s in server_em])
+    #print("Operation", client_op, server_op, [s + client_op for s in server_op])
     total_low = client_op + client_em + server_op[0] + server_em[0]
     total_high = client_op + client_em + server_op[1] + server_em[1]
-    print("CO2 (kg/hour):", model.energy_to_co2(total_low), model.energy_to_co2(total_high))
+    print("CO2 (kg/hour):", model.energy_to_co2((total_low + total_high)/2))
 
 
 def return_data(devices, bandwidth):
@@ -197,6 +202,20 @@ def return_data(devices, bandwidth):
     total_high = client_op + client_em + server_op[1] + server_em[1]
 
     return model.energy_to_co2(total_low + total_high / 2)
+
+def category(remote_emissions):
+    type_of_category = [0.23322969933143028, 2.1370573090129854, 6.685746235870748, 13.185258541950043]
+    name_of_category = ["Lower class", "Lower middle class", "Upper middle class", "Upper class"]
+
+    for i in range(0,len(type_of_category)) :
+        type_of_category[i] = abs(type_of_category[i] - remote_emissions)
+
+    closer_to_zero = type_of_category[0]
+    for i in type_of_category :
+        if i < closer_to_zero :
+            closer_to_zero = i
+
+    return name_of_category[type_of_category.index(closer_to_zero)]
 
 
 

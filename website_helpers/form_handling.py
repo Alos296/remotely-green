@@ -1,5 +1,5 @@
-from models import CalculatorResponse, Device, App, Route
-import calculator
+from website_helpers.models import CalculatorResponse, Device, App, Route
+from website_helpers import calculator
 
 def handleRemoteForm(requestArgs):
     # Parameters
@@ -20,7 +20,9 @@ def handleRemoteForm(requestArgs):
 
     remote_emissions = calculator.return_data(devices, bandwidth)
 
-    model_response = CalculatorResponse("TBI: Consumption Category",remote_emissions, "TBI: Consumption Category", "TBI: CO2 Total emissions", "TBI: Difference CO2 emissions")
+    remote_category = calculator.category(remote_emissions)
+
+    model_response = CalculatorResponse(remote_category,remote_emissions, "TBI: Consumption Category", "TBI: CO2 Total emissions", "TBI: Difference CO2 emissions")
 
     return model_response.json()
 
